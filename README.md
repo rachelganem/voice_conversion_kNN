@@ -11,4 +11,3 @@ The method includes three steps:
 
 In the following code repo we will implement by ourselves the paper above, but we'll try to training the encoder and the decoder with a different dataset.
 
-ךןמל 
