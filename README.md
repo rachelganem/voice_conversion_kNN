@@ -1,7 +1,7 @@
 # Voice Conversion With Just Nearest Neighbors
 Links:
-- Arvix Paper:
-- Official Code Repo:
+- Arvix Paper: https://arxiv.org/abs/2305.18975
+- Official Code Repo: https://github.com/bshall/knn-vc
 
 We want to be able to convert source voice to target voice without additional training.
 The method includes three steps:
