@@ -1,0 +1,20 @@
+Prompt 1 (General, Conversational Style)
+"The weather today is perfect for a walk in the park. The sun is shining, and there's a light breeze in the air.
+I always find that a short walk helps clear my mind and boost my energy.
+Sometimes, I listen to music or a podcast, but other times, I just enjoy the sounds of nature around me.
+It's a great way to take a break from screens and refresh my thoughts."
+
+Prompt 2 (Narrative, Expressive Style)
+"Once upon a time, in a quiet village by the sea, there lived an old fisherman named Elias.
+Every morning before sunrise, he set sail, hoping for a good catch.
+He loved the sound of the waves and the salty breeze on his face.
+One day, after hours with no luck, he felt a strong pull on his line.
+He braced himself—what he caught would change his life forever."
+
+Prompt 3 (Balanced, Natural Speech)
+"I always start my morning with a cup of coffee.
+There's something about the smell and warmth that wakes me up instantly.
+Some days, I drink it black, and other days, I add a bit of milk.
+Either way, it's the perfect way to begin the day."
+
+
