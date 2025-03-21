@@ -4,7 +4,7 @@ import hubconf as hc
 
 def create_knn_vc_instance():
     # create knn_vc object. use hubconf file
-    return hc.knn_vc(prematched=True, pretrained=True)
+    return hc.knn_vc(prematched=True, pretrained=True, device='cpu')
 
 
 def runKnn_VC(knn_vc, src_wav_path, ref_wav_paths):
@@ -20,8 +20,10 @@ def save_tensor_waveform_to_wav(tensor_wav, output_path="benchmark_output", samp
 
 
 def main():
-    src_wav_path = "test_data/resampled/rachel/rachel_prompt1.wav"
-    ref_wav_paths = ["test_data/resampled/aviv/aviv_prompt1.wav", "test_data/resampled/aviv/aviv_prompt2.wav"]
+    src_wav_path = "test_data/resampled/rachel/rachel_prompt3.wav"
+    ref_wav_paths = ["test_data/resampled/aviv/aviv_prompt1.wav", "test_data/resampled/aviv/aviv_prompt2.wav",
+                     "test_data/resampled/aviv/aviv_prompt4.wav", "test_data/resampled/aviv/aviv_prompt5.wav",
+                     "test_data/resampled/aviv/aviv_prompt6.wav", "test_data/resampled/aviv/aviv_prompt7.wav"]
     print("=====Create knn vc instance====")
     knn_vc = create_knn_vc_instance()
     print("=====Run knn vc instance====")

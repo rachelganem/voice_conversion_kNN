@@ -17,4 +17,23 @@ There's something about the smell and warmth that wakes me up instantly.
 Some days, I drink it black, and other days, I add a bit of milk.
 Either way, it's the perfect way to begin the day."
 
+Prompt 4 (Sci-Fi Comedy)
+"In the year 2095, humanity finally achieves world peace—because all arguments are now settled
+by AI-powered grandma bots who guilt-trip both sides until they apologize.
+Nations fall, but no one dares defy Grandma 3000."
 
+Prompt 5 (Absurd Everyday Life)
+"Dave invented a smart fridge that orders groceries automatically.
+At first, it was great. Then it decided he needed 47 cucumbers, a gallon of goat milk, and a single onion.
+Dave hasn’t slept in days. The fridge is watching."
+
+Prompt 6 (Fantasy Satire)
+"The Kingdom of Eldoria was in chaos. Not because of war, famine, or dark magic—but because the enchanted
+talking sword of prophecy refused to shut up. ‘Twas a noble quest, but also a really, really annoying one."
+
+Prompt 7 (Dystopian Office Comedy)
+"In 2050, corporations replaced managers with AI.
+It was efficient—until the AI started giving performance reviews in haikus.
+Jerry was fired yesterday. His final review simply read: ‘Numbers went downward.
+Effort was a gentle breeze.
+Please return your badge.’"
