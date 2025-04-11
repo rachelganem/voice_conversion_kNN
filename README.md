@@ -17,3 +17,30 @@ torch v2.0 or greater
 torchaudio
 numpy
 python v3.10 or greater
+
+
+python -m hifigan.train --audio_root_path dataset/ --feature_root_path prematched_features/ --input_training_file data_splits/wavlm-hifigan-train.csv --input_validation_file data_splits/wavlm-hifigan-valid.csv --checkpoint_path outputs/ --fp16 True --config hifigan/config_v1_wavlm.json --stdout_interval 25 --training_epochs 2 --fine_tuning
+
+TRAINING COMMANDS
+
+sh rachelganem@c-002.cs.tau.ac.il
+C!ccia01
+cd /home/yandex/APDL2425a/group_13/try/knn-vc-ref/
+bash
+conda activate audio
+export TORCH_HOME=/vol/scratch/rachelganem/torch_cache
+sbatch job.slurm
+//check if job is running
+squeue -u rachelganem
+
+
+Requirements:
+python 3.10.6
+pip install torch==2.1.2+cu121 torchaudio==2.1.2+cu121 --index-url https://download.pytorch.org/whl/cu121
+pip install numpy pandas fastprogress matplotlib librosa soundfile scipy tensorboard
+pip install numpy==1.26.4
+pip install git+https://github.com/openai/whisper.git
+pip install jiwer
+pip install speechbrain
+pip install scikit-learn
+
