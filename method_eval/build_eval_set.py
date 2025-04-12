@@ -4,17 +4,22 @@ from glob import glob
 import csv
 from collections import defaultdict
 
+from run_pipline import run_full_pipeline, create_knn_vc_instance, run_full_pipeline_on_existing_knnvc
+from src.knnvc.hubconf import knn_vc
+
 csv_path = "eval_set.csv"
 output_prematched_path = "converted/prematched"
 output_normal_path = "converted/normal"
+raw_test_path = "../data/dataset/raw/test-clean"
+feature_base_path = "../data/dataset/prematched"
 
 
-def build_evaluation_set(test_path, output_csv, num_speakers=40, num_utterance_per_speaker=5):
+def build_evaluation_set(test_path=raw_test_path, output_csv=csv_path, num_speakers=40, num_utterance_per_speaker=5):
     """
     Builds an evaluation CSV file with num_utterance_per_speaker utterances
     sampled from num_speakers. Paths are saved relative to `test_path`.
     """
-    print("Building Evaluation Set...")
+    print(f"Building evaluation set from: {test_path}")
     speaker_to_files = defaultdict(list)
 
     # Step 1: Find all .flac files grouped by speaker
@@ -31,7 +36,7 @@ def build_evaluation_set(test_path, output_csv, num_speakers=40, num_utterance_p
 
     # Step 2: Filter speakers with enough files
     eligible_speakers = [s for s in speaker_to_files if len(speaker_to_files[s]) >= num_utterance_per_speaker]
-    assert len(eligible_speakers) >= num_speakers, "❌ Not enough eligible speakers."
+    assert len(eligible_speakers) >= num_speakers, "Not enough eligible speakers."
 
     # Step 3: Sample speakers and utterances
     selected_speakers = random.sample(eligible_speakers, num_speakers)
@@ -51,11 +56,12 @@ def build_evaluation_set(test_path, output_csv, num_speakers=40, num_utterance_p
         writer = csv.DictWriter(csvfile, fieldnames=["speaker", "path"])
         writer.writeheader()
         writer.writerows(sampled_utterances)
+    print(f"Saved {len(sampled_utterances)} utterances to {output_csv}")
 
 
-def extract_eval_transcripts(eval_csv_path=csv_path, output_path="converted/transcripts.csv"):
+def extract_eval_transcripts(eval_csv_path=csv_path, data_path=raw_test_path, output_path="converted/transcripts.csv"):
     transcript_lines = []
-
+    print(f"Extracting transcripts using eval set: {eval_csv_path}")
     with open(eval_csv_path, "r", encoding="utf-8") as infile:
         reader = csv.DictReader(infile)
         for row in reader:
@@ -63,15 +69,17 @@ def extract_eval_transcripts(eval_csv_path=csv_path, output_path="converted/tran
             utt_id = os.path.splitext(os.path.basename(audio_path))[0]
             trans_file = audio_path.replace(".flac", ".trans.txt").replace(utt_id, utt_id.split("-")[0] + "-" +
                                                                            utt_id.split("-")[1])
-
-            if os.path.exists(trans_file):
-                with open(trans_file, "r", encoding="utf-8") as tf:
+            trans_path = os.path.join(data_path, trans_file)
+            print(f"Extracting transcript from {trans_path}")
+            if os.path.exists(trans_path):
+                with open(trans_path, "r", encoding="utf-8") as tf:
                     for line in tf:
                         if line.startswith(utt_id):
                             transcript_lines.append({"utt_id": utt_id, "transcript": line.strip().split(" ", 1)[1]})
                             break
             else:
-                print(f"Warning: {trans_file} not found")
+                print(f"Warning: {trans_path} not found")
+                break  # todo: remove this is for debugging
 
     # Save filtered transcripts
     with open(output_path, "w", encoding="utf-8", newline="") as outfile:
@@ -91,23 +99,38 @@ def load_eval_set(csv_path):
     return speaker_to_utterances
 
 
-def run_all_conversions(pre_matched=True, csv_path=csv_path):
-    output_path = output_prematched_path if pre_matched else output_normal_path
+def run_all_conversions(csv_path=csv_path, data_root=raw_test_path, device="cuda", k=4):
+    print(f"Starting all conversions based on: {csv_path}")
     speaker_to_utterances = load_eval_set(csv_path)
     all_speakers = list(speaker_to_utterances.keys())
 
-    for source_speaker, source_utterances in speaker_to_utterances.items():
-        for source_path in source_utterances:
-            for target_speaker in all_speakers:
-                if target_speaker == source_speaker:
-                    continue
-                target_path = random.choice(speaker_to_utterances[target_speaker])
-                run_pipeline(source_path, target_path, output_path)  # todo: import this function
+    for prematched in [True, False]:
+        print(f"========Running prematched = {prematched} conversion...=======")
+        knn_vc = create_knn_vc_instance(prematched, device,
+                                        use_custom_path=False)  # todo:change use_custom_path to true when finish training
+        output_path = output_prematched_path if prematched else output_normal_path
+        os.makedirs(output_path, exist_ok=True)
+
+        for source_speaker, source_utterances in speaker_to_utterances.items():
+            for source_path in source_utterances:
+                for target_speaker in all_speakers:
+                    if target_speaker == source_speaker:
+                        continue
+                    # retrieve target utterances
+                    target_paths = speaker_to_utterances[target_speaker]
+                    src_wav = os.path.join(data_root, source_path)
+                    ref_wavs = [os.path.join(data_root, target_path) for target_path in target_paths]
+                    utt_id = os.path.splitext(os.path.basename(source_path))[0]
+                    tgt_id = target_speaker
+                    out_path = os.path.join(output_path, f"{utt_id}_to_{tgt_id}.wav")
+
+                    print(f"prematched={prematched} {utt_id}_to_{tgt_id}.wav")
+
+                    run_full_pipeline_on_existing_knnvc(knn_vc, src_wav_path=src_wav, ref_wav_paths=ref_wavs,
+                                                        output_path=out_path, k=k)
 
 
 if __name__ == "__main__":
-    test_folder = "../data/dataset/raw/test-clean/test-clean"
-    build_evaluation_set(test_folder)
-    # run_all_conversions(pre_matched=True)
-    # run_all_conversions(pre_matched=False)
-    extract_eval_transcripts()
+    # build_evaluation_set()
+    # extract_eval_transcripts()
+    run_all_conversions(device="cpu")
