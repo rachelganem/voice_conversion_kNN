@@ -1,3 +1,4 @@
+import argparse
 import os
 import random
 from glob import glob
@@ -7,14 +8,14 @@ from collections import defaultdict
 from run_pipline import run_full_pipeline, create_knn_vc_instance, run_full_pipeline_on_existing_knnvc
 from src.knnvc.hubconf import knn_vc
 
-csv_path = "eval_set.csv"
+# csv_path = "eval_set.csv"
 output_prematched_path = "converted/prematched"
 output_normal_path = "converted/normal"
 raw_test_path = "../data/dataset/raw/test-clean"
 feature_base_path = "../data/dataset/prematched"
 
 
-def build_evaluation_set(test_path=raw_test_path, output_csv=csv_path, num_speakers=40, num_utterance_per_speaker=5):
+def build_evaluation_set(test_path=raw_test_path, output_csv="", num_speakers=40, num_utterance_per_speaker=5):
     """
     Builds an evaluation CSV file with num_utterance_per_speaker utterances
     sampled from num_speakers. Paths are saved relative to `test_path`.
@@ -59,7 +60,7 @@ def build_evaluation_set(test_path=raw_test_path, output_csv=csv_path, num_speak
     print(f"Saved {len(sampled_utterances)} utterances to {output_csv}")
 
 
-def extract_eval_transcripts(eval_csv_path=csv_path, data_path=raw_test_path, output_path="converted/transcripts.csv"):
+def extract_eval_transcripts(eval_csv_path, data_path=raw_test_path, output_path="converted/transcripts.csv"):
     transcript_lines = []
     print(f"Extracting transcripts using eval set: {eval_csv_path}")
     with open(eval_csv_path, "r", encoding="utf-8") as infile:
@@ -99,7 +100,7 @@ def load_eval_set(csv_path):
     return speaker_to_utterances
 
 
-def run_all_conversions(csv_path=csv_path, data_root=raw_test_path, device="cuda", k=4):
+def run_all_conversions(csv_path, data_root=raw_test_path, device="cuda", k=4):
     print(f"Starting all conversions based on: {csv_path}")
     speaker_to_utterances = load_eval_set(csv_path)
     all_speakers = list(speaker_to_utterances.keys())
@@ -107,7 +108,7 @@ def run_all_conversions(csv_path=csv_path, data_root=raw_test_path, device="cuda
     for prematched in [True, False]:
         print(f"========Running prematched = {prematched} conversion...=======")
         knn_vc = create_knn_vc_instance(prematched, device,
-                                        use_custom_path=False)  # todo:change use_custom_path to true when finish training
+                                        use_custom_path=True)
         output_path = output_prematched_path if prematched else output_normal_path
         os.makedirs(output_path, exist_ok=True)
 
@@ -131,6 +132,12 @@ def run_all_conversions(csv_path=csv_path, data_root=raw_test_path, device="cuda
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--csv_path', type=str, default='eval_set.csv', help='Path to evaluation CSV')
+    parser.add_argument('--device', type=str, default='cuda', help='Device to use (e.g., cuda or cpu)')
+    args = parser.parse_args()
+
+    run_all_conversions(csv_path=args.csv_path, device=args.device)
     # build_evaluation_set()
     # extract_eval_transcripts()
-    run_all_conversions(device="cpu")
+    # run_all_conversions(device="cuda")

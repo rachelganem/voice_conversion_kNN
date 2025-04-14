@@ -44,3 +44,32 @@ pip install jiwer
 pip install speechbrain
 pip install scikit-learn
 
+#!/bin/bash
+#SBATCH --job-name=eval_dataset                # Name of your job
+#SBATCH --output=logs/eval_dataset_%j.out       # Output log file (%j is replaced by the job ID)
+#SBATCH --error=logs/eval_dataset_%j.err        # Error log file
+#SBATCH --partition=studentkillable            # Partition with GPU nodes (Titan XP)
+#SBATCH --gres=gpu:1                           # Request 3 GPUs
+#SBATCH --nodes=1                              # Use one node
+#SBATCH --ntasks=1                             # One task (process)
+#SBATCH --cpus-per-task=4                      # Number of CPU cores per task
+#SBATCH --time=24:00:00                        # Maximum runtime (hh:mm:ss)
+
+# Load required modules
+# module load anaconda3
+
+# Activate your conda environmen
+# source activate audio
+# Create logs directory
+# mkdir -p logs
+
+# Set TORCH_HOME if needed
+export TORCH_HOME=/vol/scratch/rachelganem/torch_cache
+export HOME=/tmp
+export XDG_CACHE_HOME=/vol/scratch/rachelganem/tmp_cache
+
+# Specify which GPUs you want visible (here GPUs 1, 2, and 3)
+#export CUDA_VISIBLE_DEVICES=1,2,3
+
+# Run your training script with the necessary configuration files
+python -m method_eval.build_eval_set 
