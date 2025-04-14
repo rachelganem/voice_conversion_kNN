@@ -1,26 +1,20 @@
 import argparse
+import csv
 import os
 import random
-from glob import glob
-import csv
 from collections import defaultdict
+from glob import glob
 
-from run_pipline import run_full_pipeline, create_knn_vc_instance, run_full_pipeline_on_existing_knnvc
-from src.knnvc.hubconf import knn_vc
-
-# csv_path = "eval_set.csv"
-output_prematched_path = "converted/prematched"
-output_normal_path = "converted/normal"
-raw_test_path = "../data/dataset/raw/test-clean"
-feature_base_path = "../data/dataset/prematched"
+from run_pipline import create_knn_vc_instance, run_full_pipeline_on_existing_knnvc
 
 
-def build_evaluation_set(test_path=raw_test_path, output_csv="", num_speakers=40, num_utterance_per_speaker=5):
+def build_evaluation_set(test_path, output_csv, num_speakers, num_utterance_per_speaker, seed=123):
     """
     Builds an evaluation CSV file with num_utterance_per_speaker utterances
     sampled from num_speakers. Paths are saved relative to `test_path`.
     """
     print(f"Building evaluation set from: {test_path}")
+    random.seed(seed)
     speaker_to_files = defaultdict(list)
 
     # Step 1: Find all .flac files grouped by speaker
@@ -60,7 +54,7 @@ def build_evaluation_set(test_path=raw_test_path, output_csv="", num_speakers=40
     print(f"Saved {len(sampled_utterances)} utterances to {output_csv}")
 
 
-def extract_eval_transcripts(eval_csv_path, data_path=raw_test_path, output_path="converted/transcripts.csv"):
+def extract_eval_transcripts(eval_csv_path, data_path, transcript_path):
     transcript_lines = []
     print(f"Extracting transcripts using eval set: {eval_csv_path}")
     with open(eval_csv_path, "r", encoding="utf-8") as infile:
@@ -80,15 +74,14 @@ def extract_eval_transcripts(eval_csv_path, data_path=raw_test_path, output_path
                             break
             else:
                 print(f"Warning: {trans_path} not found")
-                break  # todo: remove this is for debugging
 
     # Save filtered transcripts
-    with open(output_path, "w", encoding="utf-8", newline="") as outfile:
+    with open(transcript_path, "w", encoding="utf-8", newline="") as outfile:
         writer = csv.DictWriter(outfile, fieldnames=["utt_id", "transcript"])
         writer.writeheader()
         writer.writerows(transcript_lines)
 
-    print(f"Saved {len(transcript_lines)} transcripts to {output_path}")
+    print(f"Saved {len(transcript_lines)} transcripts to {transcript_path}")
 
 
 def load_eval_set(csv_path):
@@ -100,44 +93,72 @@ def load_eval_set(csv_path):
     return speaker_to_utterances
 
 
-def run_all_conversions(csv_path, data_root=raw_test_path, device="cuda", k=4):
+def run_conversions(output_dir, speaker_to_utterances, all_speakers, data_root, knn_vc, custom, prematched, k):
+    custom_dir = "custom" if custom else "original"
+    prematched_dir = "prematched" if prematched else "normal"
+    output_path = os.path.join(output_dir, custom_dir, prematched_dir)
+    os.makedirs(output_path, exist_ok=True)
+
+    for source_speaker, source_utterances in speaker_to_utterances.items():
+        for source_path in source_utterances:
+            for target_speaker in all_speakers:
+                if target_speaker == source_speaker:
+                    continue
+                # retrieve target utterances
+                target_paths = speaker_to_utterances[target_speaker]
+                src_wav = os.path.join(data_root, source_path)
+                ref_wavs = [os.path.join(data_root, target_path) for target_path in target_paths]
+                utt_id = os.path.splitext(os.path.basename(source_path))[0]
+                tgt_id = target_speaker
+                out_path = os.path.join(output_path, f"{utt_id}_to_{tgt_id}.wav")
+
+                print(f"prematched={prematched} {utt_id}_to_{tgt_id}.wav")
+
+                run_full_pipeline_on_existing_knnvc(knn_vc, src_wav_path=src_wav, ref_wav_paths=ref_wavs,
+                                                    output_path=out_path, k=k)
+
+
+def convert_eval_set(output_dir, csv_path, data_root, device="cuda", run_all=True, use_custom_path=True,
+                     prematched=True, k=4):
     print(f"Starting all conversions based on: {csv_path}")
     speaker_to_utterances = load_eval_set(csv_path)
     all_speakers = list(speaker_to_utterances.keys())
+    if not run_all:
+        knn_vc = create_knn_vc_instance(prematched, device, use_custom_path)
+        run_conversions(output_dir, speaker_to_utterances, all_speakers, data_root, knn_vc, use_custom_path, prematched,
+                        k)
+        print("Done")
+        return
 
-    for prematched in [True, False]:
-        print(f"========Running prematched = {prematched} conversion...=======")
-        knn_vc = create_knn_vc_instance(prematched, device,
-                                        use_custom_path=True)
-        output_path = output_prematched_path if prematched else output_normal_path
-        os.makedirs(output_path, exist_ok=True)
+    print("Running all Configurations")
+    for custom in [True, False]:
+        for prematch in [True, False]:
+            print(f"========Running Custom={custom}, Prematched={prematch} conversion...=======")
+            knn_vc = create_knn_vc_instance(prematch, device, custom)
+            run_conversions(output_dir, speaker_to_utterances, all_speakers, data_root, knn_vc, custom, prematch, k)
 
-        for source_speaker, source_utterances in speaker_to_utterances.items():
-            for source_path in source_utterances:
-                for target_speaker in all_speakers:
-                    if target_speaker == source_speaker:
-                        continue
-                    # retrieve target utterances
-                    target_paths = speaker_to_utterances[target_speaker]
-                    src_wav = os.path.join(data_root, source_path)
-                    ref_wavs = [os.path.join(data_root, target_path) for target_path in target_paths]
-                    utt_id = os.path.splitext(os.path.basename(source_path))[0]
-                    tgt_id = target_speaker
-                    out_path = os.path.join(output_path, f"{utt_id}_to_{tgt_id}.wav")
-
-                    print(f"prematched={prematched} {utt_id}_to_{tgt_id}.wav")
-
-                    run_full_pipeline_on_existing_knnvc(knn_vc, src_wav_path=src_wav, ref_wav_paths=ref_wavs,
-                                                        output_path=out_path, k=k)
+    print("Done")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--csv_path', type=str, default='eval_set.csv', help='Path to evaluation CSV')
-    parser.add_argument('--device', type=str, default='cuda', help='Device to use (e.g., cuda or cpu)')
+    parser.add_argument('--test_path', type=str, required=True, help='Path to the test-clean directory')
+    parser.add_argument('--csv_path', type=str, default='eval_set.csv', help='Where to save/load eval_set.csv')
+    parser.add_argument('--device', type=str, default='cuda', help='Device to use for inference')
+    parser.add_argument('--prematched', action='store_true', help='Run only prematched version')
+    parser.add_argument('--use_custom_path', action='store_true', help='Use local vocoder weights')
+    parser.add_argument('--run_all', action='store_true',
+                        help='Run both custom and original on prematched and non-prematched ')
+    parser.add_argument('--num_speakers', type=int, default=40, help='Number of speakers to sample')
+    parser.add_argument('--num_utterances', type=int, default=5, help='Number of utterances per speaker')
+    parser.add_argument('--seed', type=int, default=123, help='Random seed for reproducibility')
+    parser.add_argument('--k', type=int, default=4, help='Number of nearest neighbors to use during matching')
+    parser.add_argument('--output_dir', type=str, default='converted', help='Base output directory')
+
     args = parser.parse_args()
 
-    run_all_conversions(csv_path=args.csv_path, device=args.device)
-    # build_evaluation_set()
-    # extract_eval_transcripts()
-    # run_all_conversions(device="cuda")
+    build_evaluation_set(test_path=args.test_path, output_csv=args.csv_path, num_speakers=args.num_speakers,
+                         num_utterance_per_speaker=args.num_utterances, seed=args.seed)
+    extract_eval_transcripts(eval_csv_path=args.csv_path, data_path=args.test_path, transcript_path=os.path.join(args.output_dir, "transcripts.csv"))
+    convert_eval_set(output_dir=args.output_dir, csv_path=args.csv_path, data_root=args.test_path, device=args.device,
+                     run_all=args.run_all, use_custom_path=args.use_custom_path, prematched=args.prematched, k=args.k)
