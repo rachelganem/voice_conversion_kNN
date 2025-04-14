@@ -69,7 +69,7 @@ For training we use the LibraSpeech dataset that includes approximately 1000 hou
 In particular, we used the train-clean-100 and the dev-clean dataset.
 Here, the link to download them: https://www.openslr.org/12
 
-##### Step 1 - Pre-Processing
+#### Step 1 - Pre-Processing
 Before training HiFi-GAN, you must precompute WavLM features for your dataset using prematch_dataset.py. This step creates .pt feature files for each .flac utterance and optionally performs prematching to improve the final synthesis quality.
 As explained in the paper, prematching reduces vocoder artifacts and increases intelligibility by generating target features conditioned on pre-aligned top-k reference frames. You can toggle prematching behavior using the --prematch flag.
 
@@ -135,6 +135,46 @@ To launch TensorBoard, run the following command and replace `path_to_logs` with
 <pre> tensorboard --logdir path_output_logs </pre>
 
 ## Evaluation
-We 
+We evaluate our model with both objective and objective metrics. 
+We implemented a module called method_eval that contains the script to build the test dataset, to perform the objective and subjective evaluation.
+
+### Step 1 - Download Test Dataset:
+Download the test-clean dataset from LibraSpeech. It can be find here: https://www.openslr.org/12
+
+### Step 2 - Build Evaluation Set:
+To build the evaluation set, run the `build_eval_set.py` script located in the `method_eval/` folder. This script performs the following:
+1. Sampling: Randomly selects a specified number of speakers (default: 40), and a fixed number of utterances per speaker (default: 5).
+2. CSV Generation: Creates eval_set.csv, listing all selected speaker IDs and their corresponding .flac utterance paths.
+3. Transcript Extraction: Searches for corresponding transcript files and writes them into converted/transcripts.csv. This is required for intelligibility evaluation.
+4. Inference: Converts each source utterance to all other target speakers in four settings (see “Checkpoints”): Prematched vocoder (pretrained & custom) and Regular vocoder (pretrained & custom). This behavior can be modified using flags like --run_all, --use_custom_path, and --prematched.
+
+Note: if `--run_all` flag is set to true, we ignore the `--use_custom_path` and `--prematched` flags
+   
+To run it:
+<pre>python method_eval/build_eval_set.py \
+    --test_path ../data/dataset/raw/test-clean \
+    --csv_path eval_set.csv \
+    --num_speakers 40 \
+    --num_utterances 5 \
+    --seed 42 \
+    --device cuda \
+    --run_all
+</pre>
+
+##### Available Arguments:
+| Flag                  | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--test_path`         | Path to the root folder of `test-clean` (LibriSpeech-style structure).      |
+| `--csv_path`          | Output path to save `eval_set.csv`.                                         |
+| `--device`            | Device for inference (`cuda` or `cpu`).                                     |
+| `--run_all`           | Run all 4 configurations (custom/prematched × original/normal).             |
+| `--use_custom_path`   | Use your own trained vocoder weights instead of pretrained.                 |
+| `--prematched`        | Run only on prematched or normal mode (default: True).                      |
+| `--num_speakers`      | Number of speakers to sample from the test set (default: 40).               |
+| `--num_utterances`    | Number of utterances per sampled speaker (default: 5).                      |
+| `--seed`              | Random seed for reproducibility (optional, default: 123).                   |
+| `--k`                 | Number of nearest neighbors to use in kNN-VC (default: 4).                  |
+
+### Step 3 - Run Objective Evaluation:
 
 
