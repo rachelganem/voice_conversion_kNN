@@ -40,10 +40,10 @@ class IntelligibilityEvaluator:
 
     def evaluate(self, audio_dir):
         wer_list, cer_list = [], []
-
         for filename in tqdm(os.listdir(audio_dir)):
             if not filename.endswith(".wav"):
                 continue
+            print(f"Evaluating {filename}")
             utt_id = filename.replace(".wav", "").split("_to_")[0]
             audio_path = os.path.join(audio_dir, filename)
 
