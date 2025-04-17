@@ -1,7 +1,7 @@
 import argparse
 import os
-from .evaluate_intelligibility import IntelligibilityEvaluator
-from .evaluate_speaker_similarity import SpeakerSimilarityEvaluator
+from evaluate_intelligibility import IntelligibilityEvaluator
+from evaluate_speaker_similarity import SpeakerSimilarityEvaluator
 
 
 def ensure_output_dir(output_path):
@@ -31,6 +31,7 @@ def run_speaker_similarity(data_path, converted_path, output_path, device):
     print(f"Results saved to {output_path}")
 
 def main():
+    print("start")
     parser = argparse.ArgumentParser(description="Run objective evaluations (intelligibility / speaker similarity)")
     parser.add_argument(
         "--eval", nargs="+", choices=["intelligibility", "speaker_similarity"], required=True,

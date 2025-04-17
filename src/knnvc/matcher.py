@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchaudio
+torchaudio.set_audio_backend("soundfile")
 import torchaudio.transforms as T
 from src.hifigan.models import Generator as HiFiGAN
 from src.hifigan.utils import AttrDict
