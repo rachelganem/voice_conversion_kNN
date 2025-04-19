@@ -2,8 +2,11 @@
 
 ## Links:
 
+- Our github repo: https://github.com/rachelganem/voice_conversion_kNN
 - Arvix Paper: https://arxiv.org/abs/2305.18975
 - Official Code Repo: https://github.com/bshall/knn-vc
+- LibriSpeech dataset: https://www.openslr.org/12
+- Our Medium Post:
 
 ## Overview
 
@@ -27,12 +30,12 @@ We provide five checkpoints:
 
 We evaluate our checkpoints on LibriSpeech test-clean dataset. Here, is the performance summarized:
 
-| Checkpoint                              | WER (%) |  CER(%)  | EER(%) |
-|:----------------------------------------|:-------:|:--------:|:------:|
-| original kNN-VC with prematched HiFiGAN | Banana  |  Cherry  | Orange |
-| our kNN-VC with prematched HiFiGAN      |   Cat   | Elephant | Mouse  |
-| original kNN-VC with regular HiFiGAN    |  Blue   |  Green   | Yellow |
-| our kNN-VC with regular HiFiGAN         |   Two   |  Three   |  Four  |
+| Checkpoint                              | WER (%) | CER(%) | EER(%) |
+|:----------------------------------------|:-------:|:------:|:------:|
+| original kNN-VC with prematched HiFiGAN |  27.16  |  9.78  |  9.12  |
+| our kNN-VC with prematched HiFiGAN      |  28.29  | 10.45  |  8.69  |
+| original kNN-VC with regular HiFiGAN    |  28.05  | 10.24  |  6.35  |
+| our kNN-VC with regular HiFiGAN         |  28.23  | 10.38  |  8.04  |
 
 ## Requirements
 
@@ -179,24 +182,25 @@ To run it:
 
 ##### Available Arguments:
 
-| Flag               | Description                                                            |
-|--------------------|------------------------------------------------------------------------|
-| `--test_path`      | Path to the root folder of `test-clean` (LibriSpeech-style structure). |
-| `--csv_path`       | Output path to save `eval_set.csv`.                                    |
-| `--device`         | Device for inference (`cuda` or `cpu`).                                |
-| `--run_all`        | Run all 4 configurations (custom/prematched × original/normal).        |
+| Flag                | Description                                                            |
+|---------------------|------------------------------------------------------------------------|
+| `--test_path`       | Path to the root folder of `test-clean` (LibriSpeech-style structure). |
+| `--csv_path`        | Output path to save `eval_set.csv`.                                    |
+| `--device`          | Device for inference (`cuda` or `cpu`).                                |
+| `--run_all`         | Run all 4 configurations (custom/prematched × original/normal).        |
 | `--use_custom_path` | Use your own trained vocoder weights instead of pretrained.            |
-| `--prematched`     | Run only on prematched or normal mode (default: True).                 |
-| `--num_speakers`   | Number of speakers to sample from the test set (default: 40).          |
-| `--num_utterances` | Number of utterances per sampled speaker (default: 5).                 |
-| `--seed`           | Random seed for reproducibility (optional, default: 123).              |
-| `--k`              | Number of nearest neighbors to use in kNN-VC (default: 4).             |
-| `--output_dir`     | Base output directory                                                  |
+| `--prematched`      | Run only on prematched or normal mode (default: True).                 |
+| `--num_speakers`    | Number of speakers to sample from the test set (default: 40).          |
+| `--num_utterances`  | Number of utterances per sampled speaker (default: 5).                 |
+| `--seed`            | Random seed for reproducibility (optional, default: 123).              |
+| `--k`               | Number of nearest neighbors to use in kNN-VC (default: 4).             |
+| `--output_dir`      | Base output directory                                                  |
 
 ### Step 3 - Run Objective Evaluation:
 
 To evaluate objective metrics such as intelligibility (WER/CER) and/or speaker similarity, run the `eval_objective.py`
-script located in `method_eval\objective_eval` folder. The --test_path argument is always required, while the --transcript_csv is required only for intelligibility evaluation
+script located in `method_eval\objective_eval` folder. The --test_path argument is always required, while the
+--transcript_csv is required only for intelligibility evaluation
 
 You can choose which evaluation(s) to run using the --eval flag. You may run only one, or both at the same time.
 Run intelligibility only:
@@ -215,18 +219,116 @@ python -m method_eval.objective_eval.eval_objective --eval intelligibility speak
 
 ##### Available Arguments:
 
-| Flag             | Description                                                                                                 |
-|------------------|-------------------------------------------------------------------------------------------------------------|
-| `--test_path`     | (Required) Path to the root folder of `test-clean` (LibriSpeech-style structure).                           |
-| `--eval`         | (Required)Evaluation types to run. Options: intelligibility, speaker_similarity, or both (space-separated). |
+| Flag               | Description                                                                                                 |
+|--------------------|-------------------------------------------------------------------------------------------------------------|
+| `--test_path`      | (Required) Path to the root folder of `test-clean` (LibriSpeech-style structure).                           |
+| `--eval`           | (Required)Evaluation types to run. Options: intelligibility, speaker_similarity, or both (space-separated). |
 | `--converted_path` | (Required) Path to the folder containing converted .wav files.                                              |
-| `--output_path`  | (Required) Path to the output file where results will be appended.                                          |
+| `--output_path`    | (Required) Path to the output file where results will be appended.                                          |
 | `--transcript_csv` | Path to the transcript CSV file (required for intelligibility evaluation).                                  |
-| `--whisper_model` | Whisper model size to use. Options: tiny, base, small, medium, large (default: base).                       |
-| `--device`  | Device to run models on. Default: cpu                                                                       |
+| `--whisper_model`  | Whisper model size to use. Options: tiny, base, small, medium, large (default: base).                       |
+| `--device`         | Device to run models on. Default: cpu                                                                       |
 
+### Step 4 - Subjective Evaluation:
 
+We created a Google Form to conduct our subjective evaluation, from which we calculated both Mean Opinion Score (MOS)
+and Speaker Similarity (SIM) based on participant responses.
+If you'd like to participate in our survey, you can do so using the following link: https://forms.gle/q85vmwZBCC6i4Vfs6
 
-### Step 4 - Run Subjective Evaluation:
-Do we need this? we can upload results csv from google form
+# Repository Structure
 
+<pre>
+project-root/
+├── README.md
+├── requirements.txt
+├── run_pipeline.py
+
+├── data/
+│   ├── data_splits/                         # Train/validation splits
+│   │   ├── wavlm-hifigan-train.csv
+│   │   └── wavlm-hifigan-valid.csv
+│   └── dataset/                             
+│   │   ├── prematched
+│   │   |   └── normal
+│   │   |   └── prematched
+│   │   └── raw                              # Raw/test-clean LibriSpeech-style audio
+│   │   |   └── test-clean
+│   │   |   └── train-clean-100
+│   │   |   └── dev-clean
+|
+├── method_eval/
+|   └── build_eval_set.py
+|   └── eval_set.csv                         # evaluation set - build when running build_eval_set.py
+|
+│   ├── converted/                           # Output of knnVC method on test-clean
+│   │   ├── normal/
+│   │   ├── prematched/
+│   │   └── transcripts.csv                  # For intelligibility eval
+│
+│   ├── objective_eval/
+│   │   ├── resemblyzer/                     # Adapted resemblyzer module for extracting x-vector from audio
+│   │   │   ├── audio.py
+│   │   │   ├── hparams.py
+│   │   │   ├── pretrained.pt
+│   │   │   └── voice_encoder.py
+│   │   ├── eval_objective.py
+│   │   ├── eval_utils.py
+│   │   ├── evaluate_intelligibility.py
+│   │   └── evaluate_speaker_similarity.py
+│ 
+|
+├── outputs/
+│   └── logs/                               #training logs
+│       ├── normal/
+│       ├── prematch_training1/
+│       └── prematch_training2/
+
+├── src/
+│   ├── hifigan/
+│   │   ├── config_v1_wavlm.json
+│   │   ├── meldataset.py
+│   │   ├── models.py
+│   │   ├── train.py
+│   │   └── utils.py
+│
+│   ├── knnvc/
+│   │   ├── hubconf.py
+│   │   ├── knnvc_utils.py
+│   │   ├── matcher.py
+│   │   └── prematch_dataset.py
+│
+│   ├── wavlm/
+│   │   ├── modules.py
+│   │   └── WavLM.py
+│
+│   └── weights/                         # training weights
+│       ├── weights_config.json
+│       ├── normal/
+│       │   ├── g_00068000.pt
+│       │   └── g_00118000.pt
+│       └── prematched/
+│           ├── g_00062000.pt
+│           └── g_00121000.pt
+
+</pre>
+
+# Acknowledgments
+
+Parts of code for this project are adapted from the following repositories
+
+- HiFiGAN: https://github.com/jik876/hifi-gan
+- WavLM: https://github.com/microsoft/unilm/tree/master/wavlm
+- kNN-VC official repo: https://github.com/bshall/knn-vc/tree/master
+- resemblyzer: https://github.com/resemble-ai/Resemblyzer
+
+# Citation
+
+<pre>
+@inproceedings{baas2023knnvc,
+author={Matthew Baas and Benjamin van Niekerk and Herman Kamper},
+title={Voice Conversion With Just Nearest Neighbors},
+year=2023,
+booktitle={Interspeech},
+}
+
+</pre>
