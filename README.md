@@ -14,8 +14,8 @@ In the following repo we are going to implement and analyze the kNN-VC method, i
 Nearest Neighbors in 2023.
 kNN-VC is a non-parametic approach to any-to-any voice conversion that includes three steps:
 
-1. Encoding raw audio of source and target spakers to self-supervised speech representation using the WavLM model
-2. We repleace each frame of the source with the mean of the k closest features from the reference using kNN algorithm.
+1. Encoding raw audio of source and target speakers to self-supervised speech representation using the WavLM model
+2. We replace each frame of the source with the mean of the k closest features from the reference using kNN algorithm.
 3. We convert the resulting feature sequence to waveform (.wav) using Hi-FiGan as vocoder.
 
 ## Checkpoints
@@ -143,7 +143,7 @@ can! :)
 | `--fp16`                  | Enable automatic mixed precision training (faster & memory efficient). Default: `False`.     |
 | `--fine_tuning`           | Load weights from previous checkpoint and resume training. Use for transfer learning setups. |
 
-#### Monotoring Results:
+#### Monitoring Results:
 
 During training, model checkpoints and logs are saved to the specified output directory. You can monitor the training
 process in real-time using **TensorBoard**, including tracking generator loss, mel-spectrogram loss, and discriminator
