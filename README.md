@@ -6,7 +6,7 @@
 - Arvix Paper: https://arxiv.org/abs/2305.18975
 - Official Code Repo: https://github.com/bshall/knn-vc
 - LibriSpeech dataset: https://www.openslr.org/12
-- Our Medium Post:
+- Our Medium Post: https://medium.com/@rachel.ganem/reproducing-knn-vc-a-lightweight-approach-to-voice-conversion-bbda0197512c
 
 ## Overview
 
